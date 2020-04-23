@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -56,7 +57,6 @@ public class Driver {
         int z = 0;
         while (scan.hasNextLine()) {
             String[] a = scan.nextLine().split(";");
-
             for (int i = 0; i < a.length; i++) {
                 arr[z][i] = a[i];
             }
@@ -98,13 +98,16 @@ public class Driver {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    ServerSocket serverSocket = new ServerSocket(5555);
+                    ServerSocket serverSocket = new ServerSocket(5569);
+                    System.out.println(serverSocket.getInetAddress().toString());
+                    System.out.println(serverSocket.getLocalPort());
                     System.out.println("Waiting for client connections...");
                     while (true) {
-                        Socket socket = serverSocket.accept(); // blocks code, waiting for client connection; gives back control when client arrives
+                        
                         new Thread(new Runnable() {
                             public void run() {
                                 try {
+                                    Socket socket = serverSocket.accept(); 
                                     System.out.println("Received Client connection");
                                     OutputStream outputStream = socket.getOutputStream();
                                     InputStream inputStream = socket.getInputStream(); // receive data from client.
@@ -114,14 +117,15 @@ public class Driver {
                                         String clientMessage = (String) oInputStream.readObject();
 
                                         // chuck quote request
-                                        if (clientMessage.equals("chuck")) { // requesting chatList
-                                            oOutputStream.writeObject(printChuck(randInt(chuckList.size(), 0), chuckList));
+                                        if (clientMessage.contains("chuck")) { // requesting chatList
+                                            oOutputStream.writeObject(printChuck(randInt(chuckList.size(), 0), chuckList).toString());
                                             oOutputStream.flush(); // forces TCP to send to client (no waiting in queue).
                                         } // inspirational quote request
                                         else if (clientMessage.contains("inspire")) { // 
-                                            oOutputStream.writeObject(printInspire(randInt(inspArr.length, 0), inspArr));
+                                            oOutputStream.writeObject(printInspire(randInt(inspArr.length, 0), inspArr).toString());
                                             oOutputStream.flush();
                                         } else if (clientMessage.contains("bye")) { // closing connection
+                                            oOutputStream.writeObject("bye");
                                             socket.close();
                                             break;
                                         }
@@ -129,6 +133,7 @@ public class Driver {
                                     }
                                 } catch (Exception e) {
                                     System.out.println("Error: " + e.getMessage());
+                                    
                                 }
                             }
                         }).start();
